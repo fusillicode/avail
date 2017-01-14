@@ -11,15 +11,13 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170101103405) do
-
-  create_table "events", force: :cascade do |t|
-    t.datetime "starts_at"
-    t.datetime "ends_at"
-    t.string   "kind"
-    t.boolean  "weekly_recurring"
-    t.datetime "created_at",       null: false
-    t.datetime "updated_at",       null: false
+ActiveRecord::Schema.define(version: 20_170_101_103_405) do
+  create_table 'events', force: :cascade do |t|
+    t.datetime 'starts_at'
+    t.datetime 'ends_at'
+    t.string   'kind'
+    t.boolean  'weekly_recurring'
+    t.datetime 'created_at',       null: false
+    t.datetime 'updated_at',       null: false
   end
-
 end
