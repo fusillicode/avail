@@ -11,20 +11,23 @@ class Event < ActiveRecord::Base
       from: from_day, to: to_day, week_days: week_days
     ).order :starts_at
 
-    # Getting all the normal openings together with the "actualized"
-    # weekly recurring ones all ordered by day (keys) and times (values)
-    openings = events_of_interest.select { |event| event.kind == 'opening' }.each_with_object(Hash.new(SortedSet.new)) do |opening, hash|
+    # Prepare the temporal frame for the openings
+    openings = Hash[temporal_frame.map { |day| [day.strftime('%Y/%m/%d'), SortedSet.new] }]
+
+    # Populute the temporal frame with the normal openings together with the
+    # weekly recurring "actualized"
+    events_of_interest.select { |event| event.kind == 'opening' }.each do |opening|
       if opening.weekly_recurring
         temporal_frame.select { |date| date.wday == opening.starts_at.wday }.each do |actualized_opening_date|
-          hash[actualized_opening_date.strftime('%Y/%m/%d')] = hash[actualized_opening_date.strftime('%Y/%m/%d')].merge [opening.starts_at.strftime('%I:%M'), opening.ends_at.strftime('%I:%M')]
+          openings[actualized_opening_date.strftime('%Y/%m/%d')] = openings[actualized_opening_date.strftime('%Y/%m/%d')].merge [opening.starts_at.strftime('%I:%M'), opening.ends_at.strftime('%I:%M')]
         end
       else
-        hash[opening.starts_at.strftime('%Y/%m/%d')] = hash[opening.starts_at].merge [opening.starts_at.strftime('%I:%M'), opening.ends_at.strftime('%I:%M')]
+        openings[opening.starts_at.strftime('%Y/%m/%d')] = memo[opening.starts_at.strftime('%Y/%m/%d')].merge [opening.starts_at.strftime('%I:%M'), opening.ends_at.strftime('%I:%M')]
       end
-      hash
-    end.sort.to_h
+      openings
+    end
 
-    appointments = events_of_interest.select{ |event| event.kind == 'appointment' }
+    appointments = events_of_interest.select { |event| event.kind == 'appointment' }
 
     Hash[openings.map do |opening_day, opening_times|
       # Merging adiacent opening_times to build NON adiacent ones
