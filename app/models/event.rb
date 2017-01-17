@@ -8,8 +8,7 @@ class Event < ActiveRecord::Base
       ((weekly_recurring IS NULL OR weekly_recurring = 'f') AND starts_at BETWEEN :from AND :to)
       OR
       (weekly_recurring == 't' AND starts_at <= :to AND strftime('%w', starts_at) IN (:week_days))",
-      from: from_day, to: to_day, week_days: week_days
-    ).order :starts_at
+                               from: from_day, to: to_day, week_days: week_days).order :starts_at
 
     # Prepare the temporal frame for the openings
     openings = Hash[temporal_frame.map { |day| [day.strftime('%Y/%m/%d'), SortedSet.new] }]
@@ -29,7 +28,7 @@ class Event < ActiveRecord::Base
 
     appointments = events_of_interest.select { |event| event.kind == 'appointment' }
 
-    Hash[openings.map do |opening_day, opening_times|
+    openings.map do |opening_day, opening_times|
       # Merging adiacent opening_times to build NON adiacent ones
       opening_times = opening_times.to_a
       opening_times = opening_times.size.odd? ? [opening_times.first, opening_times.last] : opening_times
@@ -50,8 +49,8 @@ class Event < ActiveRecord::Base
         memo
       end
 
-      [opening_day, availabilities]
-    end]
+      { date: opening_day, slots: availabilities }
+    end
   end
 end
 
