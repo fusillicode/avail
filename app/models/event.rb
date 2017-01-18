@@ -11,17 +11,17 @@ class Event < ActiveRecord::Base
                                from: from_day, to: to_day, week_days: week_days).order :starts_at
 
     # Prepare the temporal frame for the openings
-    openings = Hash[temporal_frame.map { |day| [day.strftime('%Y/%m/%d'), SortedSet.new] }]
+    openings = Hash[temporal_frame.map { |day| [day, SortedSet.new] }]
 
     # Populute the temporal frame with the normal openings together with the
     # weekly recurring "actualized"
     events_of_interest.select { |event| event.kind == 'opening' }.each do |opening|
       if opening.weekly_recurring
         temporal_frame.select { |date| date.wday == opening.starts_at.wday }.each do |actualized_opening_date|
-          openings[actualized_opening_date.strftime('%Y/%m/%d')] = openings[actualized_opening_date.strftime('%Y/%m/%d')].merge [opening.starts_at.strftime('%I:%M'), opening.ends_at.strftime('%I:%M')]
+          openings[actualized_opening_date] = openings[actualized_opening_date].merge [opening.starts_at, opening.ends_at]
         end
       else
-        openings[opening.starts_at.strftime('%Y/%m/%d')] = memo[opening.starts_at.strftime('%Y/%m/%d')].merge [opening.starts_at.strftime('%I:%M'), opening.ends_at.strftime('%I:%M')]
+        openings[opening.starts_at] = memo[opening.starts_at].merge [opening.starts_at, opening.ends_at]
       end
       openings
     end
@@ -37,20 +37,24 @@ class Event < ActiveRecord::Base
         last_availability_bound = opening.first
         # To work correctly the appointments should be ordered by starts_at!
         appointments.each do |appointment|
-          if appointment.starts_at.strftime('%Y/%m/%d') != opening_day && last_availability_bound != opening.last
-            memo += [last_availability_bound, opening.last]
+          if appointment.starts_at.to_date != opening_day.to_date && last_availability_bound != opening.last
+            memo += format_slot([last_availability_bound, opening.last])
             break
-          elsif last_availability_bound != (appointment_start = appointment.starts_at.strftime('%I:%M'))
-            memo += [last_availability_bound, appointment_start]
+          elsif last_availability_bound != (appointment_start = appointment.starts_at)
+            memo += format_slot([last_availability_bound, appointment_start])
           end
-          last_availability_bound = appointment.ends_at.strftime('%I:%M')
+          last_availability_bound = appointment.ends_at
         end
-        memo += [last_availability_bound, opening.last] if last_availability_bound != opening.last
+        memo += format_slot([last_availability_bound, opening.last]) if last_availability_bound != opening.last
         memo
       end
 
       { date: opening_day, slots: availabilities }
     end
+  end
+
+  def self.format_slot slot
+    slot.map { |bound| bound.strftime('%-l:%M') }
   end
 end
 
