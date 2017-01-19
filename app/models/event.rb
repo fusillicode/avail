@@ -21,7 +21,7 @@ class Event < ActiveRecord::Base
           openings[actualized_opening_date] = openings[actualized_opening_date].merge [opening.starts_at, opening.ends_at]
         end
       else
-        openings[opening.starts_at] = memo[opening.starts_at].merge [opening.starts_at, opening.ends_at]
+        openings[opening.starts_at] = openings[opening.starts_at].merge [opening.starts_at, opening.ends_at]
       end
       openings
     end
