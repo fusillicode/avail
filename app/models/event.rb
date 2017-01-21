@@ -53,7 +53,7 @@ class Event < ActiveRecord::Base
     end
   end
 
-  def self.format_slot slot
+  def self.format_slot(slot)
     slot.map { |bound| bound.strftime('%-l:%M') }
   end
 end
