@@ -60,8 +60,3 @@ class Event < ActiveRecord::Base
     "#{time.first}:" + "#{time.last}".ljust(2, '0')
   end
 end
-
-# [{"date":"2014/08/04","slots":["12:00","13:30"]},{"date":"2014/08/05","slots":["09:00", "09:30"]},
-# {"date":"2014/08/06","slots":[]},{"date":"2014/08/07","slots":["15:30","16:30","17:00"]},
-# {"date":"2014/08/08","slots":[]},{"date":"2014/08/09","slots":["14:00", "14:30"],"substitution":null},
-# {"date":"2015/08/10","slots":[]}]
