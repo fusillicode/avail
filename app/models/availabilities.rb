@@ -9,7 +9,7 @@ class Availabilities
   end
 
   def get
-    events       = Event.for_availbilites_calculation from, to, week_days_of_temporal_frame
+    events       = Event.for_availabilites_retrival from, to, week_days_of_temporal_frame
     appointments = events.select { |event| event.kind == 'appointment' }
     openings_from_events(events).map do |opening_day, opening_time_slots|
       {
