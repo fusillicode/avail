@@ -5,10 +5,11 @@ class Event < ActiveRecord::Base
     Availabilities.new(from_day).get
   end
 
-  def self.for_availabilites_retrival(from, to, week_days)
+  def self.for_availabilites_retrival(days_period)
     where("#{not_weekly_recurring_condition} OR #{weekly_recurring_condition}",
-          from: from, to: to, week_days: week_days)
-      .order :starts_at
+          from: days_period.first,
+          to: days_period.last,
+          week_days: days_period.group_by(&:wday).keys.map(&:to_s)).order :starts_at
   end
 
   def self.not_weekly_recurring_condition

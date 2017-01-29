@@ -9,7 +9,7 @@ class Availabilities
   end
 
   def get
-    events       = Event.for_availabilites_retrival from, to, week_days_of_temporal_frame
+    events       = Event.for_availabilites_retrival days_period
     appointments = events.select { |event| event.kind == 'appointment' }
     openings_from_events(events).map do |opening_day, opening_time_slots|
       {
@@ -23,22 +23,18 @@ class Availabilities
 
   private
 
-  def temporal_frame
+  def days_period
     (from..to).to_a
-  end
-
-  def week_days_of_temporal_frame
-    temporal_frame.group_by(&:wday).keys.map &:to_s
   end
 
   def openings_from_events(events)
     # Prepare the temporal frame for the openings and populate the temporal
     # frame with the normal openings together with the weekly recurring
     # "actualized"
-    Hash[temporal_frame.map { |day| [day, SortedSet.new] }].tap do |openings|
+    Hash[days_period.map { |day| [day, SortedSet.new] }].tap do |openings|
       events.select { |event| event.kind == 'opening' }.each do |opening|
         if opening.weekly_recurring
-          temporal_frame.select { |date| date.wday == opening.starts_at.wday }.each do |actualized_opening_date|
+          days_period.select { |date| date.wday == opening.starts_at.wday }.each do |actualized_opening_date|
             openings[actualized_opening_date] << time_slots_for_event(opening)
           end
         else
@@ -54,7 +50,7 @@ class Availabilities
       memo = opening_time_slots
       appointments.each do |appointment|
         break if appointment.starts_at.to_date != opening_day.to_date
-        appointment_time_slots = SortedSet.new time_slots_for_event(appointment)
+        appointment_time_slots = time_slots_for_event(appointment)
         memo -= appointment_time_slots
         appointments.delete appointment
       end
