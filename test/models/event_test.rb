@@ -32,4 +32,35 @@ class EventTest < ActiveSupport::TestCase
 
     assert_equal ['11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00'], availabilities[1][:slots]
   end
+
+  test 'no appointments' do
+    Event.create kind: 'opening', starts_at: DateTime.parse('2014-07-28 09:30'), ends_at: DateTime.parse('2014-07-28 15:30'), weekly_recurring: true
+
+    from           = DateTime.parse('2014-08-10')
+    to             = from + 6.days
+    availabilities = Event.availabilities from
+
+    assert_equal (from..to).to_a, availabilities.map{ |availability| availability[:date] }
+    assert_equal ["9:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00"], availabilities.second[:slots]
+  end
+
+  test 'no openings' do
+    Event.create kind: 'appointment', starts_at: DateTime.parse('2014-08-11 09:30'), ends_at: DateTime.parse('2014-08-11 11:30')
+    Event.create kind: 'appointment', starts_at: DateTime.parse('2014-08-11 13:30'), ends_at: DateTime.parse('2014-08-11 15:30')
+
+    no_availabilities '2014-08-10'
+  end
+
+  test 'no events' do
+    no_availabilities '2014-08-10'
+  end
+
+  def no_availabilities from_date
+    from           = DateTime.parse from_date
+    availabilities = Event.availabilities from
+    time_range     = (from..(from + 6.days)).to_a
+
+    assert_equal time_range, availabilities.map{ |availability| availability[:date] }
+    assert_equal Array.new(time_range.size, []), availabilities.map{ |availability| availability[:slots] }
+  end
 end
